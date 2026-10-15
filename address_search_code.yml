@@ -1,0 +1,33 @@
+---
+code: |
+  expert_lookup = census_lookup(tenant_address_street, tenant_address_city, tenant_address_zip)
+  expert_lookup_done = True
+---
+code: |
+  expert_lookup_done
+  if len(expert_lookup['candidates']) > 1:
+    expert_candidate_choice
+    expert_lookup['city'] = expert_lookup['candidates'][int(expert_candidate_choice)]['city']
+    expert_lookup['county'] = expert_lookup['candidates'][int(expert_candidate_choice)]['county']
+  expert_parcel = None
+  if (expert_lookup.get('county') or '').strip().lower() == 'los angeles':
+    expert_parcel = la_county_lookup(tenant_address_street, tenant_address_city, tenant_address_zip)
+  _raw_city = (expert_lookup.get('city') or '').strip()
+  _raw_county = (expert_lookup.get('county') or '').strip()
+  expert_county_default = ''
+  for _c in ca_counties + ['Los Angeles']:
+    if _c.lower() == _raw_county.lower():
+      expert_county_default = _c
+  expert_jurisdiction_default = ''
+  _city_options = list(los_angeles_cities)
+  if _raw_city.upper().startswith('UNINCORPORATED'):
+    expert_jurisdiction_default = 'Unincorporated Area of ' + (expert_county_default or _raw_county.title())
+  elif _raw_city:
+    expert_jurisdiction_default = _raw_city.title()
+    for _c in los_angeles_cities:
+      if _c.lower() == _raw_city.lower():
+        expert_jurisdiction_default = _c
+    if expert_jurisdiction_default not in _city_options:
+      _city_options.append(expert_jurisdiction_default)
+  expert_jurisdiction_choices = sorted(_city_options) + ['Unincorporated Area of ' + (expert_county_default or 'Los Angeles')]
+---
